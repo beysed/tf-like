@@ -1,0 +1,147 @@
+`` k8_namespace(name)
+resource "kubernetes_namespace" "$name" {
+  metadata {
+    name = "$name"
+  }
+}
+``
+
+`` k8_pvc_host_path(name namespace size)
+resource "kubernetes_persistent_volume_claim" "$name" {
+  metadata {
+    namespace = "$namespace"
+    name      = "$name"
+  }
+
+  spec {
+    storage_class_name = "hostpath"
+    access_modes       = ["ReadWriteOnce"]
+    resources {
+      requests = {
+        storage = "$size"
+      }
+    }
+  }
+}
+``
+
+`` k8_node_port(port node_port)
+    port {
+      port        = $port
+      target_port = $port
+      node_port   = $node_port
+    }
+
+    type       = "NodePort"
+``
+
+`` k8_service(name namespace port)
+resource "kubernetes_service" "$name" {
+  metadata {
+    namespace = "$namespace"
+    name      = "$name"
+  }
+
+  spec {
+    selector = {
+      k8s-app = "$name"
+    }
+    $port
+  }
+}
+``
+
+`` k8_sts(name namespace)
+resource "kubernetes_stateful_set" "$name" {
+  metadata {
+    name      = "$name"
+    namespace = "$namespace"
+  }
+
+  spec {
+    service_name = "$name"
+
+    selector {
+      match_labels = {
+        k8s-app = "$name"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          k8s-app = "$name"
+        }
+      }
+      spec {
+        ${@ $_r ` $_v}
+      }
+    }
+  }
+}
+``
+
+`` k8_spec_volume_claim(name)
+volume {
+    name = "$name"
+    persistent_volume_claim {
+    claim_name = "$name"
+    }
+}
+``
+
+`` k8_spec_volume_dir_hostpath(name path)
+volume {
+    name = "$name"
+    host_path {
+        type = "Directory"
+        path = "$path"
+    }
+}
+``
+
+`` k8_container(name image)
+container {
+    name  = "$name"
+    image = "$image"
+    ${@ $_r ` $_v}
+}
+``
+
+`` k8_volume_mount(name path)
+volume_mount {
+    mount_path = "$path"
+    name       = "$name"
+}
+``
+
+`` k8_container_port(port)
+port {
+    container_port = $port
+}
+``
+
+`` k8_container_resources(l_cpu l_mem r_cpu r_mem)
+resources {
+    limits = {
+        cpu    = "$l_cpu"
+        memory = "$l_mem"
+    }
+
+    requests = {
+        cpu    = "$r_cpu"
+        memory = "$r_mem"
+    }
+}
+``
+
+`` k8_container_env(name value)
+env {
+    name  = "$name"
+    value = "$value"
+}
+``
+
+conflate = () {
+    @ $_r ` $_v
+}

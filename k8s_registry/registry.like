@@ -1,0 +1,17 @@
+#include "./k8.like"
+
+$conflate(
+    $k8_namespace(k8s)
+    $k8_service(registry k8s $k8_node_port(5000 31000))
+    $k8_sts(registry k8s
+        $k8_spec_volume_dir_hostpath('registry-data' /run/desktop/mnt/host/e/wsl/registry)
+        $k8_container(registry "registry:2"
+            $k8_container_resources("0.25" "0.50Gi" "0.25" "0.25Gi")
+            $k8_container_port(5000)
+            $k8_volume_mount('registry-data' "/var/lib/registry")
+        )
+    )
+) | $tf
+
+(err = ($tf | & terraform fmt -)) | $fmt
+$err ? ~ "$tf\n$err" % ((~ $fmt) > 'registry.tf')
